@@ -14,20 +14,48 @@ provider "aws" {
   profile = "my-profile" # AWS CLI의 "my-profile" 프로파일을 사용
 }
 
-# AMI 값을 locals로 지정
-locals {
-  #ami = "ami-063d43db0594b521b" # Amazon Linux 2023 AMI로 초기 설정 후 Ubuntu AMI로 변경 가능
-  ami = "ami-0866a3c8686eaeeba" # ubuntu ami 
+# al2023 이미지 정보 가져오기
+data "aws_ami" "al2023" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-*"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
 }
+
+# Ubuntu 이미지 정보 가져오기
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical의 AWS 계정 ID
+
+  filter {
+    name   = "name"
+    values = ["ubuntu"] # Ubuntu
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"] # 아키텍처 설정
+  }
+}
+
 
 # 리소스 간 의존성 설정
 resource "aws_security_group" "example_sg" {
   name = "example-sg" # 보안 그룹 이름 설정
 }
 
+
 # EC2 인스턴스 생성 전 생명 주기 제어
 resource "aws_instance" "example_create_before_destroy_with_dependency" {
-  ami           = local.ami  # 로컬 변수로 설정한 AMI ID 사용
+  ami           = data.aws_ami.al2023  # 설정한 AMI ID 사용
   instance_type = "t2.micro" # EC2 인스턴스 유형 설정
 
   lifecycle {
