@@ -14,10 +14,26 @@ provider "aws" {
   profile = "my-profile" # AWS CLI의 "my-profile" 프로파일을 사용
 }
 
+# 이미지 가져오기
+data "aws_ami" "al2023" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-*"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+}
+
 # 예시 1: count를 사용한 반복
 resource "aws_instance" "example1" {
   count         = 3                       # 3개의 인스턴스를 생성
-  ami           = "ami-0c55b159cbfafe1f0" # 사용할 AMI ID
+  ami           = data.aws_ami.al2023.id  # 사용할 AMI ID
   instance_type = "t2.micro"              # EC2 인스턴스 유형 설정
 
   tags = {
@@ -29,7 +45,7 @@ resource "aws_instance" "example1" {
 # 예시 2: for_each를 사용한 반복
 resource "aws_instance" "example2" {
   for_each      = toset(["dev", "staging", "prod"]) # 환경별(dev, staging, prod)로 인스턴스를 생성
-  ami           = "ami-0c55b159cbfafe1f0"           # 사용할 AMI ID
+  ami           = data.aws_ami.al2023.id            # 사용할 AMI ID
   instance_type = "t2.micro"                        # EC2 인스턴스 유형 설정
 
   tags = {
